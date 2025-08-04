@@ -14,7 +14,8 @@ function App() {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/generate", {
+      const res = await axios.post("https://ai-career-helper-backend.onrender.com/generate", {
+
         name,
         education,
         skills,
