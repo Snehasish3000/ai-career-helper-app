@@ -1,0 +1,11 @@
+# render.yaml
+services:
+  - type: web
+    name: ai-career-helper-backend
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GEMINI_API_KEY
+        value: your_actual_api_key_here
