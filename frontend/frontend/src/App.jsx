@@ -7,29 +7,43 @@ function App() {
   const [skills, setSkills] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState("resume"); // 'resume' or 'career'
+  const [mode, setMode] = useState("resume"); // resume or career
 
   const resultRef = useRef();
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post("https://ai-career-helper-backend.onrender.com/generate", {
+  const BACKEND_URL = "https://ai-career-helper-backend.onrender.com/generate"; // ✅ Replace with your real backend URL if needed
 
+  const handleGenerate = async () => {
+    if (!name || !education || !skills) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    setResult("");
+    try {
+      const response = await axios.post(BACKEND_URL, {
         name,
         education,
         skills,
-        type: mode, // Send mode to backend
+        type: mode,
       });
-      setResult(res.data.output);
+
+      // Support both keys
+      setResult(response.data.output || response.data.generated_text || "No output received.");
     } catch (err) {
-      setResult("⚠️ Error: " + (err.response?.data?.error || "Something went wrong"));
+      console.error(err);
+      setResult(
+        "⚠️ Error: " + (err.response?.data?.error || "Something went wrong. Please try again.")
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDownload = () => {
     if (!resultRef.current) return;
+
     const options = {
       filename: mode === "career" ? "Career_Path_AI.pdf" : "AI_Resume.pdf",
       margin: 0.3,
@@ -37,18 +51,25 @@ function App() {
       html2canvas: { scale: 2 },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
     };
+
     window.html2pdf().set(options).from(resultRef.current).save();
   };
 
   return (
-    <div style={{ maxWidth: "700px", margin: "auto", padding: "2rem", fontFamily: "Arial" }}>
+    <div style={containerStyle}>
       <h1>🚀 AI Career Helper</h1>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
-        <button onClick={() => setMode("resume")} style={mode === "resume" ? activeTab : inactiveTab}>
+      <div style={tabStyle}>
+        <button
+          onClick={() => setMode("resume")}
+          style={mode === "resume" ? activeTab : inactiveTab}
+        >
           Resume Mode
         </button>
-        <button onClick={() => setMode("career")} style={mode === "career" ? activeTab : inactiveTab}>
+        <button
+          onClick={() => setMode("career")}
+          style={mode === "career" ? activeTab : inactiveTab}
+        >
           Career Suggestion
         </button>
       </div>
@@ -75,7 +96,7 @@ function App() {
         style={inputStyle}
       />
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+      <div style={buttonGroup}>
         <button onClick={handleGenerate} disabled={loading} style={buttonStyle}>
           {loading ? "Generating..." : "Generate with AI"}
         </button>
@@ -87,20 +108,8 @@ function App() {
       </div>
 
       {result && (
-        <div
-          ref={resultRef}
-          style={{
-            background: "#fff",
-            padding: "2rem",
-            border: "1px solid #ccc",
-            boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-            whiteSpace: "pre-wrap",
-            lineHeight: "1.6",
-          }}
-        >
-          <h2 style={{ borderBottom: "1px solid #ddd" }}>
-            {mode === "career" ? `${name}'s AI Career Roadmap` : `${name}'s AI Resume`}
-          </h2>
+        <div ref={resultRef} style={outputStyle}>
+          <h2>{mode === "career" ? `${name}'s AI Career Roadmap` : `${name}'s AI Resume`}</h2>
           <p>{result}</p>
         </div>
       )}
@@ -108,11 +117,25 @@ function App() {
   );
 }
 
+const containerStyle = {
+  maxWidth: "700px",
+  margin: "auto",
+  padding: "2rem",
+  fontFamily: "Arial, sans-serif",
+};
+
 const inputStyle = {
   width: "100%",
   padding: "10px",
   margin: "10px 0",
   fontSize: "1rem",
+};
+
+const buttonGroup = {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "20px",
+  flexWrap: "wrap",
 };
 
 const buttonStyle = {
@@ -125,6 +148,12 @@ const buttonStyle = {
   borderRadius: "4px",
 };
 
+const tabStyle = {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "1rem",
+};
+
 const activeTab = {
   ...buttonStyle,
   backgroundColor: "#007bff",
@@ -133,6 +162,16 @@ const activeTab = {
 const inactiveTab = {
   ...buttonStyle,
   backgroundColor: "#ccc",
+};
+
+const outputStyle = {
+  background: "#fff",
+  padding: "2rem",
+  border: "1px solid #ccc",
+  boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+  whiteSpace: "pre-wrap",
+  lineHeight: "1.6",
+  borderRadius: "8px",
 };
 
 export default App;
